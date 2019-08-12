@@ -24,6 +24,11 @@ variable "security_groups" {
   description = "AWS security group ids"
 }
 
+variable "predefined_security_groups" {
+  default     = true
+  description = "Use pre-defined AWS security groups"
+}
+
 variable "vpc_id" {
   description = "AWS VPC id"
 }
@@ -43,6 +48,16 @@ variable "elasticache_subnet_group_name" {
 variable "maintenance_window" {
   default     = "wed:03:00-wed:04:00"
   description = "Maintenance window"
+}
+
+variable "snapshot_window" {
+  default     = "02:00-03:00"
+  description = "Backup window"
+}
+
+variable "snapshot_retention_limit" {
+  default     = "7"
+  description = "The number of days for which ElastiCache will retain automatic cache cluster snapshots"
 }
 
 variable "cluster_size" {

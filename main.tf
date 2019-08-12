@@ -14,7 +14,7 @@ module "label" {
 # Security Group Resources
 #
 resource "aws_security_group" "default" {
-  count  = "${var.enabled == "true" ? 1 : 0}"
+  count  = "${var.enabled == "true" && var.predefined_security_groups == "false" ? 1 : 0}"
   vpc_id = "${var.vpc_id}"
   name   = "${module.label.id}"
 
@@ -37,6 +37,7 @@ resource "aws_security_group" "default" {
 
 locals {
   elasticache_subnet_group_name = "${var.elasticache_subnet_group_name != "" ? var.elasticache_subnet_group_name : join("", aws_elasticache_subnet_group.default.*.name) }"
+  security_groups = [ "${split(",", var.predefined_security_groups ? join(",", var.security_groups) : join(",", compact(concat(aws_security_group.default.*.id,list("")))))}" ]
 }
 
 resource "aws_elasticache_subnet_group" "default" {
@@ -55,7 +56,6 @@ resource "aws_elasticache_parameter_group" "default" {
 resource "aws_elasticache_replication_group" "default" {
   count = "${var.enabled == "true" ? 1 : 0}"
 
-  auth_token                    = "${var.auth_token}"
   replication_group_id          = "${var.replication_group_id == "" ? module.label.id : var.replication_group_id}"
   replication_group_description = "${module.label.id}"
   node_type                     = "${var.instance_type}"
@@ -65,8 +65,10 @@ resource "aws_elasticache_replication_group" "default" {
   availability_zones            = ["${slice(var.availability_zones, 0, var.cluster_size)}"]
   automatic_failover_enabled    = "${var.automatic_failover}"
   subnet_group_name             = "${local.elasticache_subnet_group_name}"
-  security_group_ids            = ["${aws_security_group.default.id}"]
+  security_group_ids            = ["${local.security_groups}"]
   maintenance_window            = "${var.maintenance_window}"
+  snapshot_window               = "${var.snapshot_window}"
+  snapshot_retention_limit      = "${var.snapshot_retention_limit}"
   notification_topic_arn        = "${var.notification_topic_arn}"
   engine_version                = "${var.engine_version}"
   at_rest_encryption_enabled    = "${var.at_rest_encryption_enabled}"
